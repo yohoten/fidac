@@ -1,4 +1,4 @@
-# FIDAC - 财务数智决策应用系统
+# FIDAC - 财务数智决策应用赛项目文档
 
 <div align="center">
 
