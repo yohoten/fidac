@@ -1,0 +1,335 @@
+# ============================================
+# FIDAC 项目 - Git 常用命令速查手册
+# ============================================
+# 作者: Yohoten
+# 仓库: https://gitee.com/yohoten/FIDAC
+# ============================================
+
+# ============================================
+# 1. 首次推送流程（新仓库）
+# ============================================
+
+# 进入项目目录
+cd "f:\（8）Desktop\财务数智决策应用赛_260725\FIDAC"
+
+# 初始化 Git 仓库
+git init
+
+# 添加所有文件到暂存区
+git add .
+
+# 创建初始提交
+git commit -m "Initial commit: 财务数智决策应用赛项目"
+
+# 添加 Gitee 远程仓库
+git remote add origin https://gitee.com/yohoten/FIDAC.git
+
+# 重命名分支为 main
+git branch -M main
+
+# 推送到 Gitee（首次推送）
+git push -u origin main
+
+
+# ============================================
+# 2. 日常更新流程（最常用）
+# ============================================
+
+# 查看当前状态
+git status
+
+# 添加所有修改的文件
+git add .
+
+# 或者添加指定文件
+git add README.md
+git add data/collect_financial_data.py
+
+# 提交修改
+git commit -m "描述你的修改内容"
+
+# 推送到远程仓库
+git push
+
+
+# ============================================
+# 3. 拉取远程更新
+# ============================================
+
+# 拉取并合并远程更改
+git pull origin main
+
+# 如果远程有本地没有的更改（首次拉取）
+git pull origin main --allow-unrelated-histories
+
+
+# ============================================
+# 4. 查看历史记录
+# ============================================
+
+# 查看提交历史（简洁版）
+git log --oneline
+
+# 查看详细提交历史
+git log
+
+# 查看最近 5 条记录
+git log -5
+
+# 查看某个文件的修改历史
+git log --follow README.md
+
+
+# ============================================
+# 5. 分支管理
+# ============================================
+
+# 查看当前分支
+git branch
+
+# 查看所有分支（包括远程）
+git branch -a
+
+# 创建新分支
+git branch feature/new-feature
+
+# 切换分支
+git checkout feature/new-feature
+
+# 创建并切换到新分支
+git checkout -b feature/new-feature
+
+# 删除本地分支
+git branch -d feature/new-feature
+
+# 删除远程分支
+git push origin --delete feature/new-feature
+
+
+# ============================================
+# 6. 撤销操作
+# ============================================
+
+# 撤销工作区的修改（未 add）
+git checkout -- filename
+
+# 撤销暂存区的文件（已 add，未 commit）
+git reset HEAD filename
+
+# 撤销最后一次提交（保留修改）
+git reset --soft HEAD~1
+
+# 撤销最后一次提交（丢弃修改）
+git reset --hard HEAD~1
+
+# 放弃所有本地修改，强制同步远程
+git fetch origin
+git reset --hard origin/main
+
+
+# ============================================
+# 7. 处理冲突
+# ============================================
+
+# 当推送被拒绝时，先拉取远程更改
+git pull origin main
+
+# 如果出现冲突，编辑冲突文件后
+git add .
+git commit -m "解决合并冲突"
+git push
+
+# 取消正在进行的合并
+git merge --abort
+
+
+# ============================================
+# 8. 标签管理
+# ============================================
+
+# 创建标签
+git tag v1.0.0
+
+# 创建带注释的标签
+git tag -a v1.0.0 -m "版本 1.0.0 发布"
+
+# 查看所有标签
+git tag
+
+# 推送标签到远程
+git push origin v1.0.0
+
+# 推送所有标签
+git push origin --tags
+
+
+# ============================================
+# 9. 远程仓库管理
+# ============================================
+
+# 查看远程仓库信息
+git remote -v
+
+# 修改远程仓库地址
+git remote set-url origin https://gitee.com/yohoten/FIDAC.git
+
+# 删除远程仓库
+git remote remove origin
+
+# 添加多个远程仓库
+git remote add upstream https://github.com/xxx/FIDAC.git
+
+
+# ============================================
+# 10. 忽略文件配置
+# ============================================
+
+# 创建 .gitignore 文件
+# 在文件末尾添加以下内容：
+
+# Python 缓存
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+
+# 虚拟环境
+.venv/
+venv/
+ENV/
+
+# IDE 配置
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# 数据缓存
+data/.cache/
+
+# 日志文件
+*.log
+logs/
+
+# Excel 临时文件
+~$*.xlsx
+*.xlk
+
+# 系统文件
+.DS_Store
+Thumbs.db
+
+
+# ============================================
+# 11. 实用技巧
+# ============================================
+
+# 查看某个提交的详细改动
+git show <commit-hash>
+
+# 比较两个版本的差异
+git diff HEAD~1 HEAD
+
+# 查看某个文件的每一行是谁修改的
+git blame filename
+
+# 统计代码行数
+git ls-files | xargs wc -l
+
+# 清理未跟踪的文件（谨慎使用）
+git clean -n    # 预览将要删除的文件
+git clean -f    # 实际删除
+
+
+# ============================================
+# 12. 常见问题解决
+# ============================================
+
+# 问题1: 推送被拒绝 (remote contains work that you do not have locally)
+# 解决: 先拉取远程更改
+git pull origin main --allow-unrelated-histories
+git push
+
+# 问题2: 远程仓库地址错误
+# 解决: 重新设置远程地址
+git remote set-url origin https://gitee.com/yohoten/FIDAC.git
+
+# 问题3: 大文件无法推送
+# 解决: 使用 Git LFS 或从暂存区移除大文件
+git rm --cached largefile.zip
+
+# 问题4: 误提交了敏感信息
+# 解决: 使用 git filter-branch 或 BFG Repo-Cleaner
+
+
+# ============================================
+# 13. FIDAC 项目专用命令
+# ============================================
+
+# 数据采集后提交
+cd data
+python collect_financial_data.py
+cd ..
+git add data/*.xlsx
+git commit -m "Update: 更新财务数据"
+git push
+
+# 分析结果提交
+cd work
+python 02_ratio_analysis.py
+python 03_dupont_zscore_wolle.py
+cd ..
+git add work/*.xlsx
+git commit -m "Update: 更新分析报告"
+git push
+
+# 完整工作流程
+git status
+git add .
+git commit -m "feat: 添加新功能 / fix: 修复bug / docs: 更新文档"
+git pull origin main
+git push
+
+
+# ============================================
+# 14. Git 配置优化（可选）
+# ============================================
+
+# 设置用户信息
+git config --global user.name "Yohoten"
+git config --global user.email "your-email@example.com"
+
+# 设置默认编辑器
+git config --global core.editor "code --wait"
+
+# 设置换行符处理（Windows）
+git config --global core.autocrlf true
+
+# 启用彩色输出
+git config --global color.ui auto
+
+# 简化日志格式
+git config --global alias.lg "log --oneline --graph --decorate"
+
+
+# ============================================
+# 快速参考卡片
+# ============================================
+# 
+# 最常用的 5 个命令：
+# 1. git status          - 查看状态
+# 2. git add .           - 添加所有修改
+# 3. git commit -m "msg" - 提交修改
+# 4. git pull            - 拉取远程更新
+# 5. git push            - 推送到远程
+#
+# 遇到问题时的解决步骤：
+# 1. git status          - 先看状态
+# 2. git log --oneline   - 看历史
+# 3. git diff            - 看差异
+# 4. git stash           - 暂存当前工作
+# 5. git pull            - 拉取最新代码
+# 6. git stash pop       - 恢复暂存的工作
+#
+# ============================================
