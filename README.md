@@ -7,7 +7,7 @@
 ![AkShare](https://img.shields.io/badge/AkShare-1.12.0-orange.svg)
 ![Pandas](https://img.shields.io/badge/Pandas-2.0.0-red.svg)
 
-**基于数字化手段的财务决策辅助工具 | 自动化金融数据采集与深度分析**
+**基于K-Means聚类与Prophet时序预测的重庆上市车企财务智能预警研究——赛力斯外部协同经营模式对标长安自主研发模式**
 
 </div>
 
@@ -15,7 +15,7 @@
 
 ## 📋 项目简介
 
-FIDAC（Financial Intelligent Decision Application Competition）是一个专为"财务数智决策应用赛"开发的智能化工具，旨在通过自动化数据采集和深度财务分析，为投资决策提供科学依据。
+FIDAC（Financial Intelligent Decision Application Competition）是一个专为"财务数智决策应用赛"的工作文件夹，旨在通过自动化数据采集和深度财务分析，为投资决策提供科学依据。
 
 ### ✨ 核心特性
 
