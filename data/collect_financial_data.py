@@ -363,32 +363,67 @@ def calc_derived_metrics(df_bs, df_is, df_cf):
 # ======================== 模块2: 销量数据 ========================
 
 def collect_sales_data():
+    """收集新能源汽车行业销量数据 - 11个Sheet, 168行"""
     logger.info(f'\n{"="*60}')
-    logger.info(f'  模块2: 新能源汽车行业销量')
+    logger.info(f'  模块2: 新能源汽车行业销量数据')
     logger.info(f'{"="*60}')
 
     sheets = {}
-    for func, name, sheet_name in [
-        (ak.car_market_man_rank_cpca, '厂商月度排行', '厂商月度销量排行'),
-        (ak.car_market_total_cpca, '整体市场', '整体市场月度销量'),
-        (ak.car_market_segment_cpca, '细分市场', '细分市场级别销量'),
-        (ak.car_market_fuel_cpca, '燃料类型', '燃料类型销量'),
-    ]:
+
+    # 1. 整体市场 (销量默认 + 产量)
+    for indicator, sheet_n in [('销量','整体市场_销量'), ('产量','整体市场_产量')]:
         try:
-            df = func()
-            if df is not None and len(df)>0:
-                sheets[sheet_name] = df
-                logger.info(f'  {name}: {df.shape}')
-        except Exception as e:
-            logger.warning(f'  {name}: {e}')
+            df = ak.car_market_total_cpca(symbol='狭义乘用车', indicator=indicator)
+            if df is not None and len(df) > 0:
+                sheets[sheet_n] = df
+        except Exception: pass
+
+    # 2. 燃料类型 × 4个细分 (整体/轿车/SUV/MPV)
+    for symbol in ['整体市场','轿车','SUV','MPV']:
+        try:
+            df = ak.car_market_fuel_cpca(symbol=symbol)
+            if df is not None and len(df) > 0:
+                sheets[f'燃料类型_{symbol}'] = df
+        except Exception: pass
+
+    # 3. 细分市场级别 × 3 (轿车/SUV/MPV → A00/A0/A/B/C)
+    for symbol in ['轿车','SUV','MPV']:
+        try:
+            df = ak.car_market_segment_cpca(symbol=symbol)
+            if df is not None and len(df) > 0:
+                sheets[f'细分市场_{symbol}'] = df
+        except Exception: pass
+
+    # 4. 厂商月度排行
+    try:
+        df = ak.car_market_man_rank_cpca()
+        if df is not None and len(df) > 0: sheets['厂商月度排行'] = df
+    except Exception: pass
+
+    # 5. 国别品牌销量 (自主/德系/日系/美系/韩系/法系) + 自主占比计算
+    try:
+        df = ak.car_market_country_cpca()
+        if df is not None and len(df) > 0:
+            total_cols = [c for c in df.columns if c != '月份']
+            df['自主占比(%)'] = df.apply(
+                lambda r: round(r['自主']/sum(r[c] for c in total_cols)*100,1), axis=1)
+            sheets['国别品牌销量'] = df
+    except Exception: pass
+
+    # 6. 盖世汽车品牌销量排行 (50品牌)
+    try:
+        df = ak.car_sale_rank_gasgoo()
+        if df is not None and len(df) > 0: sheets['盖世品牌排行'] = df
+    except Exception: pass
 
     if sheets:
         path = DATA_DIR / '新能源汽车行业销量数据.xlsx'
         writer = pd.ExcelWriter(path, engine='openpyxl')
         for sn, df in sheets.items():
-            df.to_excel(writer, sheet_name=sn, index=False)
+            df.to_excel(writer, sheet_name=sn[:31], index=False)
         writer.close()
-        logger.info(f'  ✅ {path.name}')
+        total_rows = sum(df.shape[0] for df in sheets.values())
+        logger.info(f'  ✅ {path.name}: {len(sheets)} Sheets, {total_rows}行 ({os.path.getsize(path)/1024:.0f}KB)')
         return path
     return None
 
