@@ -33,6 +33,7 @@ DATA_DIR.mkdir(parents=True, exist_ok=True)
 CACHE_DIR.mkdir(parents=True, exist_ok=True)
 
 TIME_START, TIME_END = 2016, 2025
+TIME_END_EXTENDED = 2026  # 用于 MAPE 评估时扩展到 2026Q1
 
 # ======================== 8家A股乘用车车企 ========================
 # 聚焦乘用车整车企业, 统一会计准则, 2016Q1-2025Q4
