@@ -1,12 +1,28 @@
 # pip install -r requirements.txt -i https://mirrors.aliyun.com/pypi/simple/
-
+#
+# ============================================================
+# 核心依赖（必需）
+# ============================================================
 pandas>=2.0.0
 numpy>=1.24.0
 akshare>=1.12.0
 openpyxl>=3.1.0
 matplotlib>=3.7.0
 scikit-learn>=1.3.0
-prophet>=1.1.0
 
-# 注: Prophet 不包含，因 CmdStan 在中文路径下无法运行
-#     时序预测改用 sklearn.linear_model.LinearRegression 替代
+# ============================================================
+# 可选依赖
+# ============================================================
+# Prophet (时序预测 — 可选，未安装时自动回退到线性回归)
+# 安装前提: 需要 C++ 编译器 (Windows 上安装 Visual Studio Build Tools)
+# 注意: CmdStan 在包含中文/空格的路径下可能无法运行
+# 安装命令:
+#   pip install prophet>=1.1.0
+# 若安装失败，时序预测将自动使用 Ridge 回归 + 多项式拟合替代，
+# 不影响 Notebook 整体运行。
+
+# statsmodels (可选 — ARIMA / 三次指数平滑，未安装时自动回退)
+#   pip install statsmodels>=0.14.0
+
+# PyTorch (可选 — LSTM 预测，未安装时自动回退到 NumPy 实现)
+#   pip install torch>=2.0.0
