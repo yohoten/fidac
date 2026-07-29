@@ -1,0 +1,72 @@
+{%- extends 'latex/index.tex.j2' -%}
+
+{% block packages %}
+{{ super() }}
+
+% ============================================
+% 中文字体支持配置
+% ============================================
+\usepackage{xeCJK}
+\setCJKmainfont{SimSun}        % 设置中文正文字体为宋体
+\setCJKsansfont{SimHei}        % 设置中文无衬线字体为黑体  
+\setCJKmonofont{FangSong}      % 设置中文等宽字体为仿宋
+
+% 其他必要的包
+\usepackage{fontspec}
+\usepackage{ctex}              % 中文支持宏包
+
+% 页面设置优化
+\usepackage{geometry}
+\geometry{a4paper, left=2.5cm, right=2.5cm, top=2.5cm, bottom=2.5cm}
+
+% 图表支持
+\usepackage{graphicx}
+\usepackage{float}
+\usepackage{caption}
+
+% 数学公式
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{amssymb}
+
+% 表格支持
+\usepackage{booktabs}
+\usepackage{longtable}
+\usepackage{array}
+\usepackage{multirow}
+
+% 超链接配置
+\usepackage{hyperref}
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue,
+    filecolor=magenta,
+    urlcolor=cyan,
+    pdftitle={{ resources.metadata.get('title', 'Jupyter Notebook') }},
+    pdfpagemode=UseNone
+}
+
+% 防止断页
+\usepackage{needspace}
+
+{% endblock packages %}
+
+{% block title %}
+\title{
+    {%- if resources.metadata.get('title') -%}
+        {{ resources.metadata['title'] }}
+    {%- else -%}
+        Jupyter Notebook
+    {%- endif -%}
+}
+\author{}
+\date{\today}
+{% endblock title %}
+
+{% block body %}
+\maketitle
+\tableofcontents
+\newpage
+
+{{ super() }}
+{% endblock body %}
