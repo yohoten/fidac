@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-追加8家车企销量数据到 "新能源汽车行业销量数据.xlsx"
+追加8家车企销量数据到 "中国汽车行业多维销量数据库.xlsx"
 ===================================================
 数据来源:
   - 公司月度产销快报 (上交所/深交所公告, 手工汇总)
@@ -13,10 +13,9 @@ import os, pandas as pd, numpy as np
 from pathlib import Path
 from openpyxl import load_workbook
 
-DATA_DIR = Path(r'F:\（8）Desktop\财务数智决策应用赛_260725\FIDAC\data')
+DATA_DIR = Path(__file__).parent
 
-TARGET_FILE = DATA_DIR / '新能源汽车行业销量数据.xlsx'
-
+TARGET_FILE = DATA_DIR / '中国汽车行业多维销量数据库.xlsx'
 # ================================================================
 # 8家车企 年度销量汇总 (万辆) — 来源: 各公司产销快报 + 乘联会
 # ================================================================

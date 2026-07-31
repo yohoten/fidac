@@ -3,9 +3,8 @@
 财务大数据智能决策竞赛 — 统一数据采集脚本
 ==========================================
 模块1: 8家A股乘用车车企 三大报表标准化采集 (2016Q1—2025Q4)
-模块2: 新能源汽车行业销量数据采集 (乘联会月度)
+模块2: 中国汽车行业多维销量数据采集 (乘联会月度)
 模块3: 综合对比表 & 数据质量报告
-
 输出路径: FIDAC/data/
 会计准则: 中国会计准则(A股统一) | 格式: 科目×日期 | 值=元
 """
@@ -362,11 +361,10 @@ def calc_derived_metrics(df_bs, df_is, df_cf):
 
 
 # ======================== 模块2: 销量数据 ========================
-
 def collect_sales_data():
-    """收集新能源汽车行业销量数据 - 11个Sheet, 168行"""
+    """收集中国汽车行业多维销量数据 - 多Sheet"""
     logger.info(f'\n{"="*60}')
-    logger.info(f'  模块2: 新能源汽车行业销量数据')
+    logger.info(f'  模块2: 中国汽车行业多维销量数据')
     logger.info(f'{"="*60}')
 
     sheets = {}
@@ -416,9 +414,8 @@ def collect_sales_data():
         df = ak.car_sale_rank_gasgoo()
         if df is not None and len(df) > 0: sheets['盖世品牌排行'] = df
     except Exception: pass
-
     if sheets:
-        path = DATA_DIR / '新能源汽车行业销量数据.xlsx'
+        path = DATA_DIR / '中国汽车行业多维销量数据库.xlsx'
         writer = pd.ExcelWriter(path, engine='openpyxl')
         for sn, df in sheets.items():
             df.to_excel(writer, sheet_name=sn[:31], index=False)

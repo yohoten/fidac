@@ -101,8 +101,6 @@ python collect_2026q1_for_mape.py
 
 ---
 
-### 六、项目结构
-
 ```
 FIDAC/
 ├── README.md                                          # 本文档
@@ -115,16 +113,18 @@ FIDAC/
 ├── data/
 │   ├── collect_financial_data.py                      # 统一采集脚本（AkShare，8家2016-2025）
 │   ├── collect_2026q1_for_mape.py                     # MAPE验证用2026Q1增量追加（保留所有sheet，不覆盖）
-│   ├── add_company_sales.py                           # 追加公司销售数据
 │   ├── extract_sales_structure.py                     # 提取销量结构数据
+│   ├── enrich_nev_data.py                             # 数据库Sheet一览与校验
+│   ├── nev_industry_analysis.py                       # NEV行业销量分析模块（可独立运行/Notebook导入）
 │   ├── *_财务数据.xlsx (x8)                           # 每家7+ Sheets
 │   ├── 赛力斯_季度销量结构.xlsx                       # 赛力斯销量明细
 │   ├── 长安汽车_季度销量结构.xlsx                     # 长安销量明细
-│   ├── 新能源汽车行业销量数据.xlsx                    # 行业对标数据
+│   ├── 中国汽车行业多维销量数据库.xlsx                # ★ 行业对标 + CAAM NEV 统一数据库（22 Sheets）
 │   ├── merged_data.csv                                # 多公司合并数据
 │   └── logs/                                          # 采集日志
 ├── reports/
-│   └── pictures/                                      # 图表输出（PNG）
+│   ├── pictures/                                      # 图表输出（PNG）
+│   └── nb_charts/                                     # ★NEW: NEV行业分析图表（6张）
 ├── models/
 │   ├── prophet_forecast.py                            # Prophet时序预测脚本（独立运行）
 │   └── kmeans_isolation_forest.py                     # K-Means + 孤立森林脚本（独立运行）
@@ -136,6 +136,7 @@ FIDAC/
 └── dosc/                                              # 竞赛参赛手册
     ├── 第六届重庆市大学生企业财务大数据智能决策竞赛参赛手册1.pdf
     └── 新能源汽车企业财务健康诊断与经营预警
+```
 ```
 
 ---
@@ -248,6 +249,111 @@ copy ".venv\Lib\site-packages\prophet\stan_model\cmdstan-2.37.0\stan\lib\stan_ma
 4. 六种预测方法中 Ridge回归 综合表现最优，Prophet仅做对比验证
 
 ---
-
 *项目启动: 2026-07-25 | 竞赛日期: 2026年9月(暂定) | 重庆师范大学*
 *本次优化(2026-07-29): Notebook Bug修复 + Prophet导入保护 + 杜邦双子图 + 季度趋势 + 四象限散点图 + MAPE增量采集脚本 + 字体警告消除*
+*本次优化(2026-07-30): 新增CAAM NEV月度数据 + 行业销量分析模块 + 6张NEV分析图表*
+
+---
+
+#### 14.1 数据来源
+
+CAAM（中国汽车工业协会）发布的新能源汽车月度量价数据（2016-2025），已全部整合到 **中国汽车行业多维销量数据库.xlsx** 的以下5个 Sheet 中：
+
+| Sheet名 | 行数 | 描述 |
+|---------|------|------|
+| `CAAM_NEV月度产销` | 114 | 月度产量+销量 |
+| `CAAM_NEV月度同比增速` | 114 | 月度产销 + 同比增速 |
+| `CAAM_NEV年度汇总` | 10 | 年度产量/销量合计 |
+| `CAAM_NEV销量宽表` | 10 | 年份×1-12月 销量矩阵 |
+| `CAAM_NEV产量宽表` | 10 | 年份×1-12月 产量矩阵 |
+
+#### 14.2 数据整合流程
+
+```bash
+# 查看数据库所有 Sheet 与行数
+python data/enrich_nev_data.py
+
+# 运行行业分析（生成6张图表 + 摘要报告）
+python data/nev_industry_analysis.py
+```
+```
+
+#### 14.3 新增 NEV 行业分析图表
+
+| 图表 | 输出文件 | 分析内容 |
+|------|----------|----------|
+| 图1: NEV月度产销趋势 | `nev_monthly_trend.png` | 2016-2025 NEV月度量价双线图 + 里程碑标注 |
+| 图2: 年度销量+增速 | `nev_yearly_growth.png` | 柱状图+同比增速折线，识别爆发拐点 |
+| 图3: NEV渗透率趋势 | `nev_penetration_trend.png` | NEV/整体市场 × 100%，标注50%关口 |
+| 图4: 车企vs行业增速对标 | `company_vs_nev_industry.png` | 赛力斯/长安/比亚迪 vs 行业NEV增速 |
+| 图5: 月度季节性热力图 | `nev_seasonal_heatmap.png` | 年份×月份销量矩阵，12月峰值/2月谷值 |
+| 图6: 月度同比增速曲线 | `nev_yoy_growth_curve.png` | 正负增速分色填充 + 100%增速线 |
+
+#### 14.4 Notebook 集成分析方案
+
+建议在主 Notebook 的 **第二阶段（智能决策模型层）** 与 **第四阶段（综合评价）** 之间插入新的分析 Cell：
+
+```
+阶段 3.5: 行业NEV销量与公司财务联动分析 ★NEW
+├── 3.5.1 加载 NEV 行业数据（从 nev_industry_analysis 模块导入）
+├── 3.5.2 NEV 月度销量趋势与行业景气度判断
+├── 3.5.3 赛力斯/长安 销量增速 vs 行业NEV增速偏离度分析
+│        └── 偏离度 = 公司增速 - 行业增速 → 正偏离=抢占份额，负偏离=掉队
+├── 3.5.4 NEV 渗透率与车企毛利率的相关性分析
+│        └── 行业渗透率提升 → 规模效应 → 毛利率改善？赛力斯/长安谁更受益？
+├── 3.5.5 月度销量季节性模式与公司季度财务指标的同步性
+│        └── Q4冲量效应是否与Q4财务指标波动一致？
+└── 3.5.6 行业拐点识别与财务预警关联
+         └── 同比增速拐点是否领先财务异常信号 1-2 个季度？
+```
+
+#### 14.5 关键分析指标定义
+
+| 指标 | 公式 | Notebook 变量名 | 用途 |
+|------|------|-----------------|------|
+| NEV渗透率 | NEV月销量 / 整体市场月销量 × 100% | `nev_penetration` | 行业转型进度 |
+| 公司增速偏离度 | 公司年增速 - 行业NEV年增速 | `growth_deviation` | 竞争地位变化 |
+| 季节性指数 | 当月销量 / 年均月销量 | `seasonal_index` | 季节性波动模式 |
+| 景气度评分 | 综合同比增速+渗透率+环比动量 | `industry_sentiment` | 行业周期定位 |
+
+#### 14.6 使用示例（Notebook 中调用）
+
+```python
+# 在 Notebook 中直接导入分析模块
+import sys
+sys.path.insert(0, 'data')
+from nev_industry_analysis import (
+    load_nev_monthly, load_8company_annual,
+    compute_yearly_growth, compute_nev_penetration,
+    plot_nev_monthly_trend, plot_company_vs_industry,
+    generate_summary_report
+)
+
+# 加载数据
+df_nev = load_nev_monthly()
+df_8co = load_8company_annual()
+
+# 计算年度增速
+yearly = compute_yearly_growth(df_nev)
+
+# 生成摘要报告
+report = generate_summary_report()
+print(f"最新NEV月销量: {report['最新月度数据']['NEV销量_万辆']}万辆")
+print(f"季节性峰值月份: {report['季节性峰值月份']}月")
+
+# 绘制图表（自动保存到 reports/nb_charts/）
+plot_nev_monthly_trend(df_nev)
+plot_company_vs_industry(df_8co, yearly)
+```
+
+#### 14.7 现有 xlsx Sheet 总览（22个）
+
+| 类别 | Sheet名 | 数据维度 |
+|------|---------|----------|
+| 整体市场 | 整体市场_销量, 整体市场_产量 | 月份 × 年份 |
+| 燃料类型 | 燃料类型_整体市场/轿车/SUV/MPV | 月份 × NEV/ICE占比 |
+| 细分市场 | 细分市场_轿车/SUV/MPV | 月份 × 级别(A00/A0/A/B/C) |
+| 厂商排行 | 厂商月度排行, 盖世品牌排行, 国别品牌销量 | 品牌/国别份额 |
+| 8家车企 | 8家车企年度/季度销量, 新能源渗透率, 季度同比增速 | 公司 × 年份/季度 |
+| 专项对比 | 赛力斯vs长安核心对比 | 赛力斯/长安双维度 |
+| **★CAAM NEV** | **CAAM_NEV月度产销, CAAM_NEV月度同比增速, CAAM_NEV年度汇总, CAAM_NEV销量宽表, CAAM_NEV产量宽表** | **月度/年度 NEV量价增速** |
