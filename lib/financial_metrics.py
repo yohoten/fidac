@@ -846,14 +846,116 @@ def compare_all_forecasts(series: pd.Series, forecast_periods: int = 4,
 
 
 def compute_forecast_metrics(y_true, y_pred):
-    """计算预测评估指标: MAPE, RMSE, MAE, R²"""
-    y_true = np.array(y_true)
-    y_pred = np.array(y_pred)
+    """
+    计算预测评估指标: MAPE, sMAPE, RMSE, MAE, R²
+    sMAPE（对称 MAPE）有界(0~200%)，近零实际值时不爆炸，适合跨指标平均。
+    """
+    y_true = np.array(y_true, dtype=float)
+    y_pred = np.array(y_pred, dtype=float)
     mask = y_true != 0
     mape = np.mean(np.abs((y_true[mask] - y_pred[mask]) / y_true[mask])) * 100 if mask.any() else np.nan
+    denom = np.abs(y_true) + np.abs(y_pred)
+    ok = denom > 0
+    smape = np.mean(200 * np.abs(y_pred[ok] - y_true[ok]) / denom[ok]) if ok.any() else np.nan
     rmse = np.sqrt(np.mean((y_true - y_pred)**2))
     mae = np.mean(np.abs(y_true - y_pred))
     ss_res = np.sum((y_true - y_pred)**2)
     ss_tot = np.sum((y_true - np.mean(y_true))**2)
     r2 = 1 - ss_res/ss_tot if ss_tot > 0 else 0
-    return {'MAPE': mape, 'RMSE': rmse, 'MAE': mae, 'R²': r2}
+    return {'MAPE': mape, 'sMAPE': smape, 'RMSE': rmse, 'MAE': mae, 'R²': r2}
+
+
+# ============================================================
+# 预测评估辅助与多方案评分（note 建议落地）
+# ============================================================
+
+def direction_hit_rate(y_true, y_pred) -> float:
+    """
+    方向命中率：实际值与预测值同号占比（0~1）。
+    对近零/突变指标（如 2026Q1 毛利率）比 MAE/MAPE 更能反映方向判断价值。
+    """
+    y_true = np.asarray(y_true, dtype=float)
+    y_pred = np.asarray(y_pred, dtype=float)
+    if y_true.size == 0 or y_pred.size != y_true.size:
+        return np.nan
+    return float(np.mean(np.sign(y_true) == np.sign(y_pred)))
+
+
+def entropy_weight_method(df_metrics, cols=('R²', 'MAPE', 'σ'),
+                          direction=(1, -1, -1)):
+    """
+    熵权法定权（客观赋权，不依赖主观权重）。
+    cols: 指标列名；direction: 1=正向(越高越好) -1=负向(越低越好)。
+    返回 (weights, entropy, df_scored)，df_scored 含 '熵权综合分'/'排名'。
+    """
+    df = df_metrics.copy()
+    X = df[list(cols)].values.astype(float)
+    n, m = X.shape
+    if n < 2 or m < 1:
+        raise ValueError('熵权法至少需要 2 个样本、1 个指标')
+
+    r = np.zeros_like(X)
+    for j in range(m):
+        col = X[:, j]
+        lo, hi = np.nanmin(col), np.nanmax(col)
+        if hi == lo:                       # 常数指标无信息量
+            r[:, j] = 1.0
+        else:
+            r[:, j] = ((col - lo) / (hi - lo) if direction[j] == 1
+                       else (hi - col) / (hi - lo))
+
+    r = np.clip(r, 1e-10, 1.0)             # 避免 ln(0)
+    p = r / r.sum(axis=0, keepdims=True)
+    k = 1.0 / np.log(n)
+    e = -k * np.sum(p * np.log(p), axis=0)
+    d = 1 - e                              # 差异系数
+    w = d / d.sum()
+    scores = (r * w).sum(axis=1)
+
+    weights = {name: round(wi, 4) for name, wi in zip(cols, w)}
+    entropy = {name: round(ei, 4) for name, ei in zip(cols, e)}
+    df['熵权综合分'] = scores
+    df['排名'] = df['熵权综合分'].rank(ascending=False).astype(int)
+    return weights, entropy, df.sort_values('熵权综合分', ascending=False)
+
+
+def score_methods(df_metrics, scheme='354520',
+                  cols=('R²', 'MAPE', 'σ'), direction=(1, -1, -1)):
+    """
+    按给定权重方案对方法级指标打分，返回带 '综合分'/'排名' 的 DataFrame。
+    scheme:
+      '354520'  → R² 35% / MAPE 45% / σ 20%（学术常用，百分位归一化，0~100）
+      '404020'  → R² 40% / MAPE 40% / σ 20%（原始方案，百分位归一化，0~100）
+      'entropy' → 熵权法定权（客观，'熵权综合分' 0~1）
+    cols/direction 可替换为 (R², sMAPE, σ) 等，以 sMAPE/MAE 为主时传 sMAPE。
+    """
+    if scheme == 'entropy':
+        _, _, df = entropy_weight_method(df_metrics, cols=cols, direction=direction)
+        return df.rename(columns={'熵权综合分': '综合分'})
+    weights = {'354520': (35, 45, 20), '404020': (40, 40, 20)}[scheme]
+    df = df_metrics.copy()
+    c0, c1, c2 = cols
+    df['score_r2'] = df[c0].rank(pct=True) * weights[0]
+    df['score_mape'] = (1 - df[c1].rank(pct=True)) * weights[1]
+    df['score_sigma'] = (1 - df[c2].rank(pct=True)) * weights[2]
+    df['综合分'] = df[['score_r2', 'score_mape', 'score_sigma']].sum(axis=1)
+    df['排名'] = df['综合分'].rank(ascending=False).astype(int)
+    return df.sort_values('综合分', ascending=False)
+
+
+def load_ratio_table(code: str, data_dir: str = 'data') -> pd.DataFrame:
+    """统一读取财务指标表：索引转 str，返回原始表（含 2026 期）"""
+    df = pd.read_excel(Path(data_dir) / f'{code}_财务数据.xlsx',
+                       sheet_name='财务指标表', index_col=0)
+    df.index = df.index.astype(str)
+    return df
+
+
+def load_actual_ratio(code: str, metric: str, period: str = '2026Q1',
+                      data_dir: str = 'data') -> float:
+    """读取指定期间的实际指标值（兼容 '2026Q1.1' 重复行），缺失返回 NaN"""
+    df = load_ratio_table(code, data_dir)
+    for p in [period, period + '.1']:
+        if p in df.index and metric in df.columns and pd.notna(df.loc[p, metric]):
+            return float(df.loc[p, metric])
+    return np.nan
