@@ -9,18 +9,25 @@
 
 ## 目录
 
-- [一、项目简介与研究背景](#一项目简介与研究背景)
-- [二、研究框架](#二研究框架)
-- [三、目录结构](#三目录结构)
-- [四、环境配置与快速开始](#四环境配置与快速开始)
-- [五、Notebook 分析流程（六章）](#五notebook-分析流程六章)
-- [六、模型与算法设计](#六模型与算法设计)
-- [七、预测方法对比与权重方案](#七预测方法对比与权重方案)
-- [八、主要结论](#八主要结论)
-- [九、数据说明](#九数据说明)
-- [十、误差指标与判定标准](#十误差指标与判定标准)
-- [十一、近期优化记录](#十一近期优化记录)
-- [十二、已知问题](#十二已知问题)
+- [基于K-Means聚类与多模型时序预测的重庆上市车企财务智能预警研究](#基于k-means聚类与多模型时序预测的重庆上市车企财务智能预警研究)
+  - [—— 赛力斯外部协同经营模式对标长安自主研发模式](#-赛力斯外部协同经营模式对标长安自主研发模式)
+  - [目录](#目录)
+  - [一、项目简介与研究背景](#一项目简介与研究背景)
+  - [二、研究框架](#二研究框架)
+  - [三、目录结构](#三目录结构)
+    - [`lib/financial_metrics.py` 统一函数库](#libfinancial_metricspy-统一函数库)
+  - [四、环境配置与快速开始](#四环境配置与快速开始)
+  - [五、Notebook 分析流程（六章）](#五notebook-分析流程六章)
+  - [六、模型与算法设计](#六模型与算法设计)
+  - [七、预测方法对比与权重方案](#七预测方法对比与权重方案)
+    - [7.1 样本内 6 方法对比](#71-样本内-6-方法对比)
+    - [7.2 三种权重方案排名（误差指标改用 sMAPE）](#72-三种权重方案排名误差指标改用-smape)
+    - [7.3 2026Q1 样本外一步前向回测](#73-2026q1-样本外一步前向回测)
+  - [八、主要结论](#八主要结论)
+  - [九、数据说明](#九数据说明)
+  - [十、误差指标与判定标准](#十误差指标与判定标准)
+  - [十一、近期优化记录](#十一近期优化记录)
+  - [十二、已知问题](#十二已知问题)
 
 ---
 
@@ -96,12 +103,15 @@ FIDAC/
 │   ├── nb_charts/                               # Notebook 图表
 │   └── nev_industry_analysis/                   # NEV 行业分析图表（9 张）
 ├── dosc/
+├── dosc/
 │   ├── 第六届重庆市大学生企业财务大数据智能决策竞赛参赛手册1.pdf
 │   └── report_v2.docx
-└── templates/
-    └── latex_chinese/                           # 中文 LaTeX 模板
+├── templates/
+│   └── latex_chinese/                           # 中文 LaTeX 模板
+├── streamlit_app.py                            # ★ Streamlit 可视化看板（在线部署）
+├── requirements-app.txt                        # 云端精简依赖（Streamlit Cloud 构建）
+└── DEPLOY.md                                   # 在线部署指南（GitHub/Gitee + Streamlit Cloud）
 ```
-
 ### `lib/financial_metrics.py` 统一函数库
 
 | 分类 | 函数 | 说明 |
@@ -140,6 +150,16 @@ python enrich_nev_data.py                 # NEV 行业数据库核对
 ```
 
 **运行 Notebook**：打开 `基于K-Means聚类与多模型时序预测的重庆上市车企财务智能预警研究.ipynb`，按顺序执行单元格（顶部有**可点击跳转目录**）。
+
+**运行 Streamlit 交互式看板**（6 个页面：项目总览 / 财务指标探索 / 风险评估 / 时序预测 / 行业 NEV 分析 / 预生成图表库）：
+
+```bash
+pip install -r requirements.txt -i https://mirrors.aliyun.com/pypi/simple/
+streamlit run streamlit_app.py        # 浏览器访问 http://localhost:8501
+```
+
+**在线部署**：将代码推送到 GitHub/Gitee 仓库后，在 [Streamlit Community Cloud](https://streamlit.io/cloud) 关联部署，
+即可通过 `https://<应用名>.streamlit.app` 在线访问。详细步骤见 [`DEPLOY.md`](DEPLOY.md)。
 
 ---
 

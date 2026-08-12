@@ -1,0 +1,16 @@
+# ============================================================
+# Streamlit 主题配置 —— 「蓝黑暗黑」可视化看板
+# ============================================================
+[theme]
+base = "dark"
+primaryColor = "#3B82F6"          # 电光蓝（主色）
+backgroundColor = "#070B14"        # 极黑蓝（页面背景）
+secondaryBackgroundColor = "#111B30"  # 深藏蓝（卡片/侧边栏）
+textColor = "#E6EDF7"              # 近白冷色（正文）
+
+[server]
+headless = true
+maxUploadSize = 20
+
+[browser]
+gatherUsageStats = false
