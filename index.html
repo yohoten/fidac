@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🚗 重庆上市车企财务智能预警研究 · FIDAC</title>
+<meta name="description" content="基于 K-Means 聚类与多模型时序预测的重庆上市车企财务智能预警研究——赛力斯外部协同经营模式对标长安自主研发模式。第六届重庆市大学生企业财务大数据智能决策应用赛参赛作品。">
+<style>
+  :root {
+    --bg-deep: #001830;
+    --bg-card: rgba(8, 32, 62, 0.55);
+    --line: rgba(56, 189, 248, 0.22);
+    --line-strong: rgba(56, 189, 248, 0.55);
+    --cyan: #38bdf8;
+    --amber: #fbbf24;
+    --green: #34d399;
+    --red: #fb7185;
+    --purple: #a78bfa;
+    --text-main: #e2e8f0;
+    --text-dim: #7d93b8;
+    --glow: 0 0 18px rgba(56, 189, 248, 0.15);
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: "Microsoft YaHei", "PingFang SC", "Segoe UI", Arial, sans-serif;
+    background:
+      radial-gradient(1200px 600px at 15% -10%, rgba(56,189,248,.10), transparent 60%),
+      radial-gradient(1000px 500px at 110% 0%, rgba(167,139,250,.07), transparent 55%),
+      linear-gradient(160deg, #001830 0%, #00264d 45%, #001224 100%);
+    color: var(--text-main);
+    min-height: 100vh;
+    line-height: 1.7;
+  }
+  .container { max-width: 1100px; margin: 0 auto; padding: 2.5rem 1.5rem 4rem; }
+
+  header { text-align: center; margin-bottom: 2.2rem; }
+  .dash-title {
+    font-size: 2.1rem; font-weight: 800; letter-spacing: 0.06em;
+    background: linear-gradient(90deg, #7dd3fc 0%, #38bdf8 30%, #a78bfa 65%, #7dd3fc 100%);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+    margin-bottom: 0.5rem;
+  }
+  .dash-sub { color: var(--text-dim); font-size: 0.98rem; letter-spacing: 0.14em; }
+  .dash-sub b { color: var(--amber); font-weight: 700; }
+  .dash-divider {
+    height: 2px; margin: 1.1rem auto 0; width: 80%;
+    background: linear-gradient(90deg, transparent, rgba(56,189,248,.6), rgba(167,139,250,.6), transparent);
+    border-radius: 2px;
+  }
+  .repo-badge { margin-top: 1rem; display: flex; gap: 0.6rem; justify-content: center; flex-wrap: wrap; }
+  .badge {
+    display: inline-block; padding: 0.25rem 0.9rem; border-radius: 999px;
+    background: rgba(56,189,248,.10); border: 1px solid var(--line-strong);
+    color: var(--cyan); font-size: 0.8rem; letter-spacing: 0.04em;
+  }
+  .badge.warn { color: var(--amber); background: rgba(251,191,36,.10); border-color: rgba(251,191,36,.4); }
+  .badge.ok { color: var(--green); background: rgba(52,211,153,.10); border-color: rgba(52,211,153,.4); }
+
+  section { margin-bottom: 2.2rem; }
+  .block-title {
+    font-size: 1.15rem; font-weight: 700; letter-spacing: 0.06em; color: var(--cyan);
+    border-left: 4px solid var(--cyan); padding-left: 0.7rem; margin-bottom: 1rem;
+  }
+  .card {
+    background: var(--bg-card);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    box-shadow: var(--glow), inset 0 1px 0 rgba(255,255,255,.05);
+    padding: 1.3rem 1.4rem;
+    transition: transform .18s ease, border-color .18s ease;
+  }
+  .card:hover { transform: translateY(-2px); border-color: var(--line-strong); }
+  .desc { color: var(--text-main); }
+  .desc .hl { color: var(--cyan); font-weight: 600; }
+  .desc .hl-amber { color: var(--amber); font-weight: 600; }
+
+  .kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; margin-bottom: 2.2rem; }
+  .kpi-card {
+    position: relative; padding: 1.1rem 1.2rem; overflow: hidden;
+    background: linear-gradient(145deg, rgba(8,32,62,.65), rgba(4,20,44,.35));
+    border: 1px solid var(--line); border-radius: 14px; box-shadow: var(--glow);
+  }
+  .kpi-card::before {
+    content: ""; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+    background: linear-gradient(90deg, var(--kpi-accent, #38bdf8), transparent);
+  }
+  .kpi-icon { position: absolute; top: 0.8rem; right: 1rem; font-size: 1.5rem; opacity: .35; }
+  .kpi-label { color: var(--text-dim); font-size: .78rem; letter-spacing: .08em; }
+  .kpi-value { font-size: 1.5rem; font-weight: 800; line-height: 1.25; font-variant-numeric: tabular-nums; }
+  .kpi-delta { font-size: .78rem; color: var(--text-dim); }
+  .kpi-delta b { font-weight: 700; }
+  .up { color: var(--red); } .down { color: var(--green); }
+
+  .feature-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; }
+  .feature-card { text-align: left; }
+  .feature-icon { font-size: 1.6rem; margin-bottom: 0.4rem; }
+  .feature-card h3 { font-size: 1rem; color: var(--cyan); margin-bottom: 0.4rem; }
+  .feature-card p { font-size: 0.88rem; color: var(--text-dim); }
+
+  /* 对比表 */
+  .cmp-wrap { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+  .cmp-card { padding: 1.1rem 1.2rem; }
+  .cmp-card h4 { font-size: 1rem; margin-bottom: 0.6rem; }
+  .cmp-seres { color: var(--amber); border-left: 3px solid var(--amber); padding-left: .5rem; }
+  .cmp-changan { color: var(--cyan); border-left: 3px solid var(--cyan); padding-left: .5rem; }
+  .cmp-card table { width: 100%; border-collapse: collapse; font-size: .88rem; }
+  .cmp-card td { padding: .45rem .5rem; border-bottom: 1px solid var(--line); color: var(--text-main); }
+  .cmp-card td:first-child { color: var(--text-dim); width: 45%; }
+  .cmp-card tr:hover td { background: rgba(56,189,248,.05); }
+
+  table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+  th, td { padding: 0.65rem 0.9rem; text-align: left; border-bottom: 1px solid var(--line); }
+  th { color: var(--cyan); font-weight: 600; letter-spacing: 0.03em; }
+  td { color: var(--text-main); }
+  tr:hover td { background: rgba(56,189,248,.05); }
+  .ok { color: var(--green); font-weight: 600; }
+  .warn { color: var(--amber); font-weight: 600; }
+  .risk { color: var(--red); font-weight: 600; }
+  .rank1 { color: var(--green); font-weight: 700; }
+
+  .tech-wrap { display: flex; flex-wrap: wrap; gap: 0.6rem; }
+  .tech {
+    padding: 0.35rem 1rem; border-radius: 8px; font-size: 0.86rem;
+    background: rgba(8,32,62,.6); border: 1px solid var(--line); color: var(--text-main);
+    transition: border-color .18s ease;
+  }
+  .tech:hover { border-color: var(--line-strong); }
+
+  pre {
+    background: rgba(2,14,34,.85); border: 1px solid var(--line); border-radius: 10px;
+    padding: 1rem 1.2rem; overflow-x: auto; font-size: 0.86rem; color: #a5d8ff;
+    font-family: Consolas, "Courier New", monospace;
+  }
+  pre .c { color: var(--text-dim); }
+
+  footer { text-align: center; color: var(--text-dim); font-size: 0.8rem; margin-top: 3rem; padding-top: 1.2rem; border-top: 1px solid var(--line); }
+  footer a { color: var(--cyan); text-decoration: none; }
+  footer a:hover { text-decoration: underline; }
+
+  @media (max-width: 900px) {
+    .kpi-grid { grid-template-columns: repeat(2, 1fr); }
+    .feature-grid { grid-template-columns: 1fr; }
+    .cmp-wrap { grid-template-columns: 1fr; }
+  }
+  @media (max-width: 560px) {
+    .kpi-grid { grid-template-columns: 1fr; }
+    .dash-title { font-size: 1.5rem; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <!-- ========== 头部 ========== -->
+  <header>
+    <div class="dash-title">🚗 重庆上市车企财务智能预警研究</div>
+    <div class="dash-sub">基于 K-Means 聚类与多模型时序预测 · 赛力斯外部协同 vs 长安自主研发</div>
+    <div class="dash-divider"></div>
+    <div class="repo-badge">
+      <span class="badge">🏆 第六届重庆市大学生企业财务大数据智能决策应用赛</span>
+      <span class="badge warn">📊 8 家 A 股乘用车整车厂</span>
+      <span class="badge">🤖 6 模型时序预测</span>
+      <span class="badge ok">📈 Streamlit 在线看板</span>
+    </div>
+  </header>
+
+  <!-- ========== KPI ========== -->
+  <div class="kpi-grid">
+    <div class="kpi-card" style="--kpi-accent:#38bdf8;">
+      <div class="kpi-icon">🏭</div>
+      <div class="kpi-label">对标车企</div>
+      <div class="kpi-value">8 家</div>
+      <div class="kpi-delta">A 股乘用车整车厂</div>
+    </div>
+    <div class="kpi-card" style="--kpi-accent:#a78bfa;">
+      <div class="kpi-icon">🗓️</div>
+      <div class="kpi-label">财务数据跨度</div>
+      <div class="kpi-value">2016–2025</div>
+      <div class="kpi-delta">季度 40 期 + 2026Q1 回测</div>
+    </div>
+    <div class="kpi-card" style="--kpi-accent:#fbbf24;">
+      <div class="kpi-icon">📈</div>
+      <div class="kpi-label">预测模型</div>
+      <div class="kpi-value">6 种</div>
+      <div class="kpi-delta">Ridge/Prophet/ARIMA/LSTM/平滑/线性</div>
+    </div>
+    <div class="kpi-card" style="--kpi-accent:#34d399;">
+      <div class="kpi-icon">📺</div>
+      <div class="kpi-label">看板页面</div>
+      <div class="kpi-value">6 页</div>
+      <div class="kpi-delta">总览 / 指标 / 风险 / 预测 / NEV / 图库</div>
+    </div>
+  </div>
+
+  <!-- ========== 项目简介 ========== -->
+  <section>
+    <div class="block-title">📌 项目简介</div>
+    <div class="card desc">
+      <p>
+        重庆作为中国西部汽车工业重镇，拥有 <span class="hl">长安汽车（000625）</span>与
+        <span class="hl-amber">赛力斯（601127）</span>两家代表性上市车企。两家企业在新能源转型中采用截然不同的路径：
+        <span class="hl-amber">外部协同</span>（赛力斯 × 华为智选）与
+        <span class="hl">自主研发</span>（长安深蓝/阿维塔/启源）。
+      </p>
+      <p style="margin-top:.6rem;">
+        核心研究问题：<span class="hl">代工协同模式（赛力斯）与自主研发模式（长安），谁的财务风险更高、更不稳定？</span>
+        项目以 <b>8 家 A 股乘用车整车厂</b>为样本，运用 K-Means 聚类、孤立森林、6 模型时序预测、杜邦分析、Z-score、沃尔评分等方法，
+        构建<span class="hl">财务智能预警体系</span>，并配套 6 页 Streamlit 交互式在线看板。
+      </p>
+    </div>
+  </section>
+
+  <!-- ========== 模式对比 ========== -->
+  <section>
+    <div class="block-title">⚖️ 赛力斯 vs 长安：两种经营模式</div>
+    <div class="cmp-wrap">
+      <div class="card cmp-card">
+        <h4 class="cmp-seres">赛力斯 601127 · 外部协同（华为智选）</h4>
+        <table>
+          <tr><td>经营模式</td><td>联合研发（华为技术赋能）</td></tr>
+          <tr><td>核心品牌</td><td>AITO 问界（2021 起）</td></tr>
+          <tr><td>毛利率（2025）</td><td>~29%（高附加值）</td></tr>
+          <tr><td>资产负债率（2025）</td><td>~71%（高杠杆扩张）</td></tr>
+          <tr><td>销量结构</td><td class="risk">高度集中（问界 ~95%）</td></tr>
+        </table>
+      </div>
+      <div class="card cmp-card">
+        <h4 class="cmp-changan">长安汽车 000625 · 自主研发</h4>
+        <table>
+          <tr><td>经营模式</td><td>自主技术平台（SDA/EPA/CHN）</td></tr>
+          <tr><td>核心品牌</td><td>深蓝、阿维塔、长安启源</td></tr>
+          <tr><td>毛利率（2025）</td><td>~16%（规模效应）</td></tr>
+          <tr><td>资产负债率（2025）</td><td>~60%（相对稳健）</td></tr>
+          <tr><td>销量结构</td><td class="ok">多品牌均衡（新能源 ~26%）</td></tr>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========== 看板功能 ========== -->
+  <section>
+    <div class="block-title">🖥️ Streamlit 看板（6 页）</div>
+    <div class="feature-grid">
+      <div class="card feature-card">
+        <div class="feature-icon">🏠</div>
+        <h3>项目总览</h3>
+        <p>研究背景、核心结论、8 家车企最新财务快照。</p>
+      </div>
+      <div class="card feature-card">
+        <div class="feature-icon">📊</div>
+        <h3>财务指标探索</h3>
+        <p>18 项指标时间趋势 / 公司对比 / 热力图（双子图）。</p>
+      </div>
+      <div class="card feature-card">
+        <div class="feature-icon">🔬</div>
+        <h3>风险评估</h3>
+        <p>K-Means 聚类、孤立森林、Z-score、沃尔评分、杜邦瀑布图。</p>
+      </div>
+      <div class="card feature-card">
+        <div class="feature-icon">🔮</div>
+        <h3>时序预测</h3>
+        <p>6 模型预测对比 + 2026Q1 样本外一步前向回测。</p>
+      </div>
+      <div class="card feature-card">
+        <div class="feature-icon">🚗</div>
+        <h3>行业 NEV 分析</h3>
+        <p>行业景气度、渗透率、季度销量结构、赛力斯 vs 长安联动。</p>
+      </div>
+      <div class="card feature-card">
+        <div class="feature-icon">🖼️</div>
+        <h3>预生成图表库</h3>
+        <p>Notebook / 行业分析输出的 14+ PNG 图表集中展示。</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========== 模型与算法 ========== -->
+  <section>
+    <div class="block-title">🤖 模型与算法</div>
+    <div class="card">
+      <table>
+        <thead><tr><th>模型</th><th>用途</th><th>关键输出</th></tr></thead>
+        <tbody>
+          <tr><td>Ridge 回归</td><td>季度财务指标预测</td><td class="ok">样本内综合分第一</td></tr>
+          <tr><td>Prophet / ARIMA / LSTM / 三次指数平滑 / 线性回归</td><td>多模型对比</td><td>趋势预测 + 交叉验证</td></tr>
+          <tr><td>2026Q1 回测</td><td>样本外一步前向</td><td class="warn">LSTM/ARIMA MAE 最低</td></tr>
+          <tr><td>K-Means</td><td>5 维风险特征聚类</td><td>K=3 风险群组</td></tr>
+          <tr><td>孤立森林</td><td>财务异常检测</td><td>异常得分 + 标签</td></tr>
+          <tr><td>杜邦分析</td><td>ROE 因素分解</td><td>瀑布图 + 驱动归因</td></tr>
+          <tr><td>Z-score（新能源阈值）</td><td>破产风险判定</td><td>危险 &lt;1.20 / 灰色 1.20–2.20 / 安全 &gt;2.20</td></tr>
+          <tr><td>沃尔评分</td><td>5 项预警指标百分制</td><td>综合预警排名</td></tr>
+          <tr><td>熵权法</td><td>R²/sMAPE/σ 客观赋权</td><td>实测 42.9/31.5/25.7</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ========== 核心结论 ========== -->
+  <section>
+    <div class="block-title">🎯 核心结论</div>
+    <div class="card">
+      <table>
+        <thead><tr><th>维度</th><th>赛力斯（代工协同）</th><th>长安汽车（自主研发）</th></tr></thead>
+        <tbody>
+          <tr><td>K-Means 聚类</td><td class="ok">稳健群</td><td class="ok">稳健群</td></tr>
+          <tr><td>孤立森林异常</td><td>正常（0.166）</td><td>正常（0.160）</td></tr>
+          <tr><td>沃尔评分（修正）</td><td class="rank1">第 1 名（90.4 分）</td><td>第 5 名（78.4 分）</td></tr>
+          <tr><td>Z-score（新能源阈值）</td><td class="warn">1.63（灰色区）</td><td class="ok">1.82（安全区）</td></tr>
+          <tr><td>杜邦 ROE（2023→2024）</td><td class="ok">-36.4% → 38.7%</td><td class="risk">13.2% → 8.0%</td></tr>
+          <tr><td>杜邦 ROE（2024→2025）</td><td class="risk">38.7% → 15.0%</td><td class="risk">8.0% → 4.1%</td></tr>
+          <tr><td>样本内预测最优</td><td colspan="2">Ridge 回归（综合分第一）</td></tr>
+          <tr><td>样本外回测最优</td><td colspan="2">LSTM / ARIMA（MAE 最低）</td></tr>
+        </tbody>
+      </table>
+      <p style="margin-top:1rem; font-size:.88rem; color:var(--text-dim);">
+        💡 <b>关键发现：</b>① 赛力斯沃尔评分高但 Z-score 落灰色区（高杠杆 + 问界集中风险）；② 长安稳健但转型偏慢，ROE 连续由净利率拖累；
+        ③ 样本内"Ridge 最优"≠样本外精度最高——回测显示 LSTM/ARIMA 更优；④ 预测分层：资产负债率可精确预警（MAPE&lt;20%），毛利率仅作方向判断。
+      </p>
+    </div>
+  </section>
+
+  <!-- ========== 技术栈 ========== -->
+  <section>
+    <div class="block-title">🧰 技术栈</div>
+    <div class="tech-wrap">
+      <span class="tech">Python 3</span>
+      <span class="tech">pandas</span>
+      <span class="tech">numpy</span>
+      <span class="tech">AkShare</span>
+      <span class="tech">scikit-learn</span>
+      <span class="tech">Prophet</span>
+      <span class="tech">statsmodels (ARIMA)</span>
+      <span class="tech">LSTM (torch)</span>
+      <span class="tech">openpyxl</span>
+      <span class="tech">matplotlib</span>
+      <span class="tech">plotly</span>
+      <span class="tech">Streamlit</span>
+      <span class="tech">LaTeX</span>
+    </div>
+  </section>
+
+  <!-- ========== 快速开始 ========== -->
+  <section>
+    <div class="block-title">🚀 快速开始</div>
+    <div class="card">
+<pre><span class="c"># 1. 克隆仓库</span>
+git clone git@github.com:yohoten/fidac.git
+cd FIDAC
+
+<span class="c"># 2. 安装依赖（阿里云镜像加速）</span>
+python -m venv .venv &amp;&amp; .venv\Scripts\activate
+pip install -r requirements.txt -i https://mirrors.aliyun.com/pypi/simple/
+
+<span class="c"># 3. 启动 Streamlit 看板（6 页）</span>
+streamlit run streamlit_app.py
+<span class="c"># 浏览器打开 http://localhost:8501</span>
+
+<span class="c"># 4. 或打开主 Notebook 复现全部分析</span>
+jupyter notebook 基于K-Means聚类与多模型时序预测的重庆上市车企财务智能预警研究.ipynb</pre>
+    </div>
+  </section>
+
+  <!-- ========== 目录结构 ========== -->
+  <section>
+    <div class="block-title">📁 目录结构</div>
+    <div class="card">
+<pre>FIDAC/
+├── <span class="c">README.md</span>                                    <span class="c"># 项目说明（12 章）</span>
+├── <span class="c">基于K-Means聚类与多模型时序预测的重庆上市车企财务智能预警研究.ipynb</span>
+├── <span class="c">streamlit_app.py</span>                            <span class="c"># 6 页 Streamlit 看板</span>
+├── <span class="c">DEPLOY.md</span>                                  <span class="c"># 在线部署指南</span>
+├── <span class="c">lib/financial_metrics.py</span>                    <span class="c"># 统一指标/预测/评分库</span>
+├── <span class="c">data/</span>                                      <span class="c"># 8 家财务 + NEV 行业数据</span>
+├── <span class="c">work/</span>                                      <span class="c"># 独立运行脚本</span>
+├── <span class="c">reports/pictures/</span>                           <span class="c"># 14+ 分析图表</span>
+├── <span class="c">dosc/</span>                                      <span class="c"># 竞赛手册 / 报告</span>
+├── <span class="c">templates/latex_chinese/</span>                    <span class="c"># 中文 LaTeX 模板</span>
+└── <span class="c">index.html</span>                                 <span class="c"># 本介绍页</span></pre>
+    </div>
+  </section>
+
+  <!-- ========== 页脚 ========== -->
+  <footer>
+    <p>第六届重庆市大学生企业财务大数据智能决策应用赛 · 2026 年 9 月 · 重庆师范大学</p>
+    <p>
+      <a href="https://github.com/yohoten/fidac">GitHub</a> ·
+      <a href="https://gitee.com/yohoten/FIDAC">Gitee</a> ·
+      Streamlit Community Cloud 在线看板
+    </p>
+  </footer>
+
+</div>
+</body>
+</html>
