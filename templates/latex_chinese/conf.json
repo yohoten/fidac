@@ -1,9 +1,0 @@
-{
-  "base_template": "latex",
-  "mimetypes": {
-    "text/latex": true,
-    "text/x-latex": true,
-    "application/pdf": true
-  },
-  "description": "LaTeX template with Chinese font support using xeCJK"
-}
